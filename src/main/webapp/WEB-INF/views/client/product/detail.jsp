@@ -11,11 +11,13 @@
         <div class="col-12 col-md-5 mb-4">
             <div class="card border-0 shadow-sm mb-3 text-center p-3">
                 <c:choose>
-                    <c:when test="${not empty product.images}">
-                        <img id="main-product-image" src="${pageContext.request.contextPath}/${product.images[0]}" class="img-fluid rounded" style="max-height: 400px; object-fit: contain;">
+                    <%-- Nếu là link ngoài (bắt đầu bằng http), hiển thị trực tiếp --%>
+                    <c:when test="${product.images[0].startsWith('http')}">
+                        <img id="main-product-image" src="${product.images[0]}" class="img-fluid rounded" style="max-height: 400px; object-fit: contain;">
                     </c:when>
+                    <%-- Nếu là link nội bộ, mới thêm pageContext.request.contextPath --%>
                     <c:otherwise>
-                        <img id="main-product-image" src="https://via.placeholder.com/400?text=No+Image" class="img-fluid rounded">
+                        <img id="main-product-image" src="${pageContext.request.contextPath}/${product.images[0]}" class="img-fluid rounded" style="max-height: 400px; object-fit: contain;">
                     </c:otherwise>
                 </c:choose>
             </div>
@@ -85,81 +87,82 @@
 <script>
     const variants = [
     <c:forEach items="${product.variants}" var="v" varStatus="status">
-        {
-            id: ${v.id},
+    {
+    id: ${v.id},
             color: "${v.color}",
             capacity: "${v.storageCapacity}",
             price: ${v.price},
             stock: ${v.stockQuantity}
-        }<c:if test="${not status.last}">,</c:if>
+    }<c:if test="${not status.last}">,</c:if>
     </c:forEach>
     ];
 </script>
 
 <!-- LOGIC TỰ ĐỘNG VẼ NÚT VÀ LẤY GIÁ BIẾN THỂ -->
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    if (!variants || variants.length === 0) return;
+    document.addEventListener("DOMContentLoaded", function () {
+        if (!variants || variants.length === 0)
+            return;
 
-    const capacityContainer = document.getElementById("capacity-container");
-    const colorContainer = document.getElementById("color-container");
-    const priceDisplay = document.getElementById("display-price");
-    const variantInput = document.getElementById("selected-variant-id");
+        const capacityContainer = document.getElementById("capacity-container");
+        const colorContainer = document.getElementById("color-container");
+        const priceDisplay = document.getElementById("display-price");
+        const variantInput = document.getElementById("selected-variant-id");
 
-    // Trích xuất danh sách duy nhất các dung lượng và màu sắc có sẵn
-    const capacities = [...new Set(variants.map(v => v.capacity))];
-    const colors = [...new Set(variants.map(v => v.color))];
+        // Trích xuất danh sách duy nhất các dung lượng và màu sắc có sẵn
+        const capacities = [...new Set(variants.map(v => v.capacity))];
+        const colors = [...new Set(variants.map(v => v.color))];
 
-    let selectedCapacity = capacities[0] || "";
-    let selectedColor = colors[0] || "";
+        let selectedCapacity = capacities[0] || "";
+        let selectedColor = colors[0] || "";
 
-    // Vẽ giao diện các nút chọn Dung lượng
-    capacities.forEach((cap, index) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "btn btn-outline-secondary variant-btn py-1 px-3 fw-bold" + (index === 0 ? " active" : "");
-        btn.innerText = cap;
-        btn.onclick = function() {
-            capacityContainer.querySelectorAll(".variant-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            selectedCapacity = cap;
-            updateSelectedVariant();
-        };
-        capacityContainer.appendChild(btn);
-    });
+        // Vẽ giao diện các nút chọn Dung lượng
+        capacities.forEach((cap, index) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn btn-outline-secondary variant-btn py-1 px-3 fw-bold" + (index === 0 ? " active" : "");
+            btn.innerText = cap;
+            btn.onclick = function () {
+                capacityContainer.querySelectorAll(".variant-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                selectedCapacity = cap;
+                updateSelectedVariant();
+            };
+            capacityContainer.appendChild(btn);
+        });
 
-    // Vẽ giao diện các nút chọn Màu sắc
-    colors.forEach((col, index) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "btn btn-outline-secondary variant-btn py-1 px-3 fw-bold" + (index === 0 ? " active" : "");
-        btn.innerText = col;
-        btn.onclick = function() {
-            colorContainer.querySelectorAll(".variant-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            selectedColor = col;
-            updateSelectedVariant();
-        };
-        colorContainer.appendChild(btn);
-    });
+        // Vẽ giao diện các nút chọn Màu sắc
+        colors.forEach((col, index) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn btn-outline-secondary variant-btn py-1 px-3 fw-bold" + (index === 0 ? " active" : "");
+            btn.innerText = col;
+            btn.onclick = function () {
+                colorContainer.querySelectorAll(".variant-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                selectedColor = col;
+                updateSelectedVariant();
+            };
+            colorContainer.appendChild(btn);
+        });
 
-    // Hàm cập nhật lại giá tiền và giá trị chuỗi variant gửi đi
-    function updateSelectedVariant() {
-        const match = variants.find(v => v.capacity === selectedCapacity && v.color === selectedColor);
-        if (match) {
-            // Định dạng lại hiển thị tiền tệ VNĐ
-            priceDisplay.innerText = new Intl.NumberFormat('vi-VN').format(match.price) + " đ";
-            // Set chuỗi giá trị gửi sang Cart để lưu vào database Order_Details
-            variantInput.value = match.color + " - " + match.capacity;
-        } else {
-            // Trường hợp không có biến thể kết hợp chính xác, lấy đại diện thông tin đã chọn
-            variantInput.value = selectedColor + " - " + selectedCapacity;
+        // Hàm cập nhật lại giá tiền và giá trị chuỗi variant gửi đi
+        function updateSelectedVariant() {
+            const match = variants.find(v => v.capacity === selectedCapacity && v.color === selectedColor);
+            if (match) {
+                // Định dạng lại hiển thị tiền tệ VNĐ
+                priceDisplay.innerText = new Intl.NumberFormat('vi-VN').format(match.price) + " đ";
+                // Set chuỗi giá trị gửi sang Cart để lưu vào database Order_Details
+                variantInput.value = match.color + " - " + match.capacity;
+            } else {
+                // Trường hợp không có biến thể kết hợp chính xác, lấy đại diện thông tin đã chọn
+                variantInput.value = selectedColor + " - " + selectedCapacity;
+            }
         }
-    }
 
-    // Chạy kích hoạt lần đầu khi load trang
-    updateSelectedVariant();
-});
+        // Chạy kích hoạt lần đầu khi load trang
+        updateSelectedVariant();
+    });
 </script>
 
 <style>

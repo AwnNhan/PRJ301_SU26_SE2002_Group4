@@ -621,7 +621,6 @@ public class ProductDAO extends DBContext {
     public List<Product> getAdminProducts(int categoryId) {
         List<Product> list = new ArrayList<>();
 
-        // Khởi tạo câu query gốc
         String sql = "SELECT p.id, p.name, p.description, p.slug, p.brand, p.category_id, p.status, "
                 + "(SELECT MIN(price) FROM Product_Variants WHERE product_id = p.id) AS display_price, "
                 + "(SELECT TOP 1 image_url FROM Product_Images WHERE product_id = p.id AND is_thumbnail = 1) AS display_image "

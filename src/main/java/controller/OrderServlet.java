@@ -1,4 +1,3 @@
-
 package controller;
 
 import dao.CartDAO;
@@ -52,30 +51,24 @@ public class OrderServlet extends HttpServlet {
         // THÊM LUỒNG XỬ LÝ TRẢ HÀNG VÀ QUAY VỀ HOME
         // ===============================================
         String action = request.getParameter("action");
-        if ("return".equals(action)) {
-            if (user == null) {
-                response.sendRedirect(request.getContextPath() + "/auth?action=loginForm");
-                return;
-            }
+        if (action != null) {
+            int orderId = 0;
             try {
-                // Lấy ID đơn hàng từ form
-                int orderId = Integer.parseInt(request.getParameter("orderId"));
-                
-                // Cập nhật trạng thái trong database thành "Đã trả hàng"
-                boolean success = orderDAO.updateStatus(orderId, "Đã trả hàng");
-                
-                if (success) {
-                    session.setAttribute("message", "Đã trả hàng thành công!");
-                } else {
-                    session.setAttribute("error", "Có lỗi xảy ra, không thể trả hàng!");
-                }
+                orderId = Integer.parseInt(request.getParameter("orderId"));
             } catch (Exception e) {
-                e.printStackTrace();
             }
-            
-            // CHUYỂN HƯỚNG VỀ TRANG HOME THEO YÊU CẦU
-            response.sendRedirect(request.getContextPath() + "/home");
-            return; // Bắt buộc có return để dừng luồng, không chạy xuống code checkout bên dưới
+
+            if ("return".equals(action)) {
+                orderDAO.updateStatus(orderId, "Đã trả hàng");
+                session.setAttribute("message", "Đã trả hàng thành công!");
+                response.sendRedirect(request.getContextPath() + "/order");
+                return; // BẮT BUỘC CÓ DÒNG NÀY
+            } else if ("complete".equals(action)) {
+                orderDAO.updateStatus(orderId, "Hoàn thành");
+                session.setAttribute("message", "Đã xác nhận nhận hàng thành công!");
+                response.sendRedirect(request.getContextPath() + "/order");
+                return; // BẮT BUỘC CÓ DÒNG NÀY
+            }
         }
         // ===============================================
         // LUỒNG 1: HIỂN THỊ TRANG XÁC NHẬN THANH TOÁN
@@ -119,10 +112,9 @@ public class OrderServlet extends HttpServlet {
 
             request.setAttribute("cartItems", cartItems);
             request.setAttribute("totalPrice", totalPrice);
-            request.setAttribute("discountAmount", discountAmount); 
+            request.setAttribute("discountAmount", discountAmount);
             request.getRequestDispatcher("/WEB-INF/views/client/order/checkout.jsp").forward(request, response);
-        } 
-        // ===============================================
+        } // ===============================================
         // LUỒNG 2: XỬ LÝ LƯU ĐƠN HÀNG XUỐNG DATABASE
         // ===============================================
         else if (path.equals("/order")) {
@@ -194,9 +186,10 @@ public class OrderServlet extends HttpServlet {
                 }
             }
         }
+
     }
 
-    private void quayLaiCheckoutTrang(HttpServletRequest request, HttpServletResponse response, 
+    private void quayLaiCheckoutTrang(HttpServletRequest request, HttpServletResponse response,
             List<CartItem> cartItems, HttpSession session, VoucherDAO voucherDAO) throws ServletException, IOException {
         double totalPrice = cartItems.stream().mapToDouble(i -> i.getProduct().getPrice() * i.getQuantity()).sum();
         double discountAmount = 0;
@@ -206,9 +199,13 @@ public class OrderServlet extends HttpServlet {
             int totalDiscountPercent = 0;
             for (String code : codes) {
                 Voucher v = voucherDAO.getVoucherByCode(code.trim().toUpperCase());
-                if (v != null) { totalDiscountPercent += v.getDiscountPercent(); }
+                if (v != null) {
+                    totalDiscountPercent += v.getDiscountPercent();
+                }
             }
-            if (totalDiscountPercent > 100) totalDiscountPercent = 100;
+            if (totalDiscountPercent > 100) {
+                totalDiscountPercent = 100;
+            }
             discountAmount = totalPrice * totalDiscountPercent / 100;
             totalPrice = totalPrice - discountAmount;
         }

@@ -88,7 +88,7 @@
                         <c:forEach items="${adminProductList}" var="p">
                             <tr>
                                 <td class="text-center">
-                                    <img src="${pageContext.request.contextPath}/${p.displayImageUrl}" alt="${p.slug}" class="img-thumbnail shadow-sm rounded" 
+                                    <img src="${p.displayImageUrl}" alt="${p.slug}" class="img-thumbnail shadow-sm rounded" 
                                          style="width: 100px; height: 100px; object-fit: cover; background-color: #fff;">
                                 </td>
                                 <td>

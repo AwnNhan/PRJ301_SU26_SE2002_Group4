@@ -57,18 +57,29 @@
                                 <!-- 6. Trạng thái đơn hàng kèm Badge màu sắc và Nút trả hàng -->
                                 <td>
                                     <c:choose>
-                                        <c:when test="${order.status eq 'Chờ xác nhận'}">
-                                            <span class="badge bg-warning text-dark px-3 py-2">Chờ xác nhận</span>
+                                        <%-- TRẠNG THÁI: CHỜ XÁC NHẬN HOẶC ĐANG GIAO --%>
+                                        <c:when test="${order.status eq 'Chờ xác nhận' or order.status eq 'Đang giao'}">
+                                            <span class="badge ${order.status eq 'Chờ xác nhận' ? 'bg-warning text-dark' : 'bg-info text-white'} px-3 py-2 mb-2 d-inline-block">
+                                                ${order.status}
+                                            </span>
+
+                                            <%-- Form bấm xác nhận Đã nhận hàng --%>
+                                            <form action="${pageContext.request.contextPath}/order" method="post" class="m-0">
+                                                <!-- Ở Servlet bạn cần bắt action="complete" để cập nhật DB -->
+                                                <input type="hidden" name="action" value="complete">
+                                                <input type="hidden" name="orderId" value="${order.id}">
+                                                <button type="submit" class="btn btn-outline-success btn-sm fw-bold w-100 shadow-sm"
+                                                        onclick="return confirm('Xác nhận bạn đã nhận được đơn hàng #ORD-${order.id} an toàn?');">
+                                                    <i class="fa-solid fa-check me-1"></i>Đã nhận hàng
+                                                </button>
+                                            </form>
                                         </c:when>
-                                        
-                                        <c:when test="${order.status eq 'Đang giao'}">
-                                            <span class="badge bg-info text-white px-3 py-2">Đang giao</span>
-                                        </c:when>
-                                        
-                                        
+
+                                        <%-- TRẠNG THÁI: HOÀN THÀNH --%>
                                         <c:when test="${order.status eq 'Đã giao' or order.status eq 'Hoàn thành'}">
                                             <span class="badge bg-success text-white px-3 py-2 mb-2 d-inline-block">${order.status}</span>
-                                            
+
+                                            <%-- Form trả hàng chỉ hiện khi đã nhận xong --%>
                                             <form action="${pageContext.request.contextPath}/order" method="post" class="m-0">
                                                 <input type="hidden" name="action" value="return">
                                                 <input type="hidden" name="orderId" value="${order.id}">
@@ -78,12 +89,12 @@
                                                 </button>
                                             </form>
                                         </c:when>
-                                        
-                                      
+
+                                        <%-- CÁC TRẠNG THÁI KHÁC --%>
                                         <c:when test="${order.status eq 'Đã trả hàng' or order.status eq 'Yêu cầu trả hàng'}">
                                             <span class="badge bg-danger text-white px-3 py-2">${order.status}</span>
                                         </c:when>
-                                        
+
                                         <c:otherwise>
                                             <span class="badge bg-secondary text-white px-3 py-2">${order.status}</span>
                                         </c:otherwise>
