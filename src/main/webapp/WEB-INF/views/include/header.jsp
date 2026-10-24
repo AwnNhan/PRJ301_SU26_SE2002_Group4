@@ -67,6 +67,15 @@
                             </a>
                         </li>
 
+                        <c:if test="${not empty sessionScope.account && sessionScope.account.role == 1}">
+                            <li class="nav-item me-3">
+                                <a class="btn btn-light text-danger fw-bold rounded-pill px-3"
+                                   href="${pageContext.request.contextPath}/admin/dashboard">
+                                    <i class="fa-solid fa-gauge-high me-1"></i> Quản trị
+                                </a>
+                            </li>
+                        </c:if>
+
                         <c:choose>
                             <%-- Nếu ĐÃ ĐĂNG NHẬP --%>
                             <c:when test="${not empty sessionScope.account}">
